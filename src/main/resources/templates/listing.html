@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8" ></meta>
+<title>Записки</title>
+    <link href="https://fonts.googleapis.com/css?family=Bad+Script" rel="stylesheet"></link>
+    <link rel="stylesheet" href="css/vex.css" />
+    <link rel="stylesheet" href="css/vex-theme-os.css" />
+    <link rel="stylesheet" href="css/my.css" />
+
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/vex.combined.min.js"></script>
+    <script>vex.defaultOptions.className = 'vex-theme-os'</script>
+    <script src="js/my.js"></script>
+
+</head>
+<body>
+<div class="header">
+    <nav>
+        <ul>
+            <li>
+                <a href="#">Сортировка по:</a>
+                <ul class="fallback">
+                    <li th:classappend="${#strings.equals(sorted, 'ByDateDesc') ? 'active' :''}"><a th:href="@{list(page=0,limit=${limit},sorted='ByDateDesc',filtered=${filtered})}">Дате(убывание)</a></li>
+                    <li th:classappend="${#strings.equals(sorted, 'ByDateAsc') ? 'active' :''}"><a th:href="@{list(page=0,limit=${limit},sorted='ByDateAsc',filtered=${filtered})}">Дате(возрастание)</a></li>
+                    <li th:classappend="${#strings.equals(sorted, 'ByPriorityAsc') ? 'active' :''}"><a th:href="@{list(page=0,limit=${limit},sorted='ByPriorityAsc',filtered=${filtered})}">Важности(возрастание)</a></li>
+                    <li th:classappend="${#strings.equals(sorted, 'ByPriorityDesc') ? 'active' :''}"><a th:href="@{list(page=0,limit=${limit},sorted='ByPriorityDesc',filtered=${filtered})}">Важности(убывание)</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+<div class="pagination">
+<ul>
+      <th:block th:each="i: ${#numbers.sequence(1, countOfPages)}">
+          <li><a th:href="@{list(page=(${i} - 1),limit=${limit},sorted=${sorted},filtered=${filtered})}" th:text="${i}" th:class="${page ==(i-1)} ? 'active' : ''">Step #1</a></li>
+      </th:block>
+  </ul>
+</div>
+    <nav>
+        <ul>
+            <li>
+                <a href="#">Фильтрация</a>
+                <ul class="fallback">
+                    <li th:classappend="${#strings.equals(filtered, 'ALL') ? 'active' :''}"><a th:href="@{list(page=0,limit=${limit},sorted=${sorted},filtered='ALL')}">Все</a></li>
+                    <li th:classappend="${#strings.equals(filtered, 'DONE') ? 'active' :''}"><a th:href="@{list(page=0,limit=${limit},sorted=${sorted},filtered='DONE')}">Выполненные</a></li>
+                    <li th:classappend="${#strings.equals(filtered, 'UNDONE') ? 'active' :''}"><a th:href="@{list(page=0,limit=${limit},sorted=${sorted},filtered='UNDONE')}">Только невыполненные</a></li>
+                    <li th:classappend="${#strings.equals(filtered, 'TASK') ? 'active' :''}"><a th:href="@{list(page=0,limit=${limit},sorted=${sorted},filtered='TASK')}">Задачи</a></li>
+                    <li th:classappend="${#strings.equals(filtered, 'TEXTNOTE') ? 'active' :''}"><a th:href="@{list(page=0,limit=${limit},sorted=${sorted},filtered='TEXTNOTE')}">Заметки</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+</div>
+  <div class="stickers">
+    <div th:each="note : ${listOfNotes}"  class="sticker" th:attr="data-id = ${note.id}">
+        <div class="wrap">
+        <div class="badge" th:attr="data-badge=${note.priority}" >
+            <span class="baspan" th:text="${note.getTask() ==1} ? 'Задача': 'Заметка'"></span>
+            <span class="done" th:style="${note.getDone() ==1} ? 'display:block'"></span>
+            <span class="trash"></span>
+            <div class="more">
+                <h2 th:text ="${#strings.abbreviate(note.title, 45)}" th:if="${#strings.length(note.content) == 0}"></h2>
+                <p th:text = "${note.formatDate()} + ', '+${#strings.abbreviate(note.content, 105)}"></p>
+            </div>
+            <div class="less"> <h2 th:text ="${#strings.abbreviate(note.title, 25)}"></h2><p th:text = "${#strings.abbreviate(note.content, 35)}"></p></div>
+        </div>
+        </div>
+    </div>
+      <div class="sticker" id="add"><div class="badge"><p>Добавить заметку</p></div></div>
+  </div>
+<div id="openModal" class="modalDialog">
+    <div>
+        <a href="#close" title="Close" class="close">X</a>
+        <h2>Добавление заметки</h2>
+        <form action="#" th:action="@{addNote}" th:object="${note}" method="post">
+            <div class="field">
+                <label for="title"  >Заголовок:</label>
+                <input type="text" id="title" th:field="*{title}"></input>
+            </div>
+            <div class="field">
+                <label for="content">Содержимое: </label>
+                <textarea id="content" th:field="*{content}"></textarea>
+            </div>
+            <div> <label for="priority">Важность:</label>
+                <select id="priority"  th:field="*{priority}">
+                    <option th:selected="true" th:value="1" >1</option>
+                    <option th:value="2" >2</option>
+                    <option th:value="3" >3</option>
+                    <option th:value="4" >4</option>
+                    <option th:value="5" >5</option>
+                    <option th:value="6" >6</option>
+                    <option th:value="7" >7</option>
+                    <option th:value="8" >8</option>
+                    <option th:value="9" >9</option>
+                    <option th:value="10" >10</option>
+                </select>
+            </div>
+            <div><fieldset>
+                <legend>Задача?</legend>
+                <ul>
+                    <li>
+                        <label for="task">Да</label>
+                        <input type="radio" id="task"  th:field="*{task}" th:selected="true" th:value="1"></input>
+                    </li>
+                    <li>
+                        <label for="note">Нет</label>
+                        <input type="radio" id="note" th:field="*{task}" th:value="0"></input>
+                    </li>
+                </ul>
+            </fieldset>
+                <fieldset>
+                <legend>Выполнено?</legend>
+                <ul>
+                    <li>
+                        <label for="done">Да</label>
+                        <input type="radio" id="done" th:field="*{done}" th:value="1"></input>
+                    </li>
+                    <li>
+                        <label for="undone">Нет</label>
+                        <input type="radio" id="undone" th:field="*{done}"  th:selected="true" th:value="0"></input>
+                    </li>
+                </ul>
+            </fieldset><div class="alert"></div></div>
+            <div class="button">
+                <button type="button" id="formsub">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
